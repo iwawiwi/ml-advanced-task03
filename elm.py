@@ -3,108 +3,131 @@ __author__ = 'iwawiwi'
 
 import numpy as np
 from time import time
+import utils
 
-def compute_rmse(x,y):
-    rmse = 0
-    return rmse
-
-
-def pseudo_inverse_svdmp(x):
-    return x
-
-
-def pseudo_inverse_geninv(x):
-    return x
-
-
-def pseudo_inverse_qrpivot(x):
-    return x
-
-def elm(train_data, test_data, elm_type, num_hid_neuron, activation_func, pseudo_inv_param):
+def elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function, pseudo_inverse_method):
     """
-    ELM (Extreme Learning Machine)
-    taken from http://www.ntu.edu.sg/home/egbhuang/elm_random_hidden_nodes.html1
+    ELM taken from http://www.ntu.edu.sg/home/egbhuang/elm_random_hidden_nodes.html
     """
-    # MACRO Definition
     REGRESSION = 0
     CLASSIFIER = 1
+    ##################################################################
+    ######################## LOAD TRAINING DATA SET ##################
+    T = np.mat(train_data[:,0].T)
+    P = np.mat(train_data[:,1:np.size(train_data,1)].T)
+    #print 'T: ', T.shape
+    #print 'P: ', P.shape
 
-    # LOAD training dataset
-    T = train_data[:,1]
-    P = train_data[:,2] # TODO: Assume that train_data only consist of two column
 
-    # LOAD testing dataset
-    TVT = test_data[:,1]
-    TVP = test_data[:,2] # TODO: Assume that test_data only consist of two column
+    ##################################################################
+    ######################## LOAD TESTING DATA SET ###################
+    TVT = np.mat(test_data[:,0].T)
+    TVP = np.mat(test_data[:,1:np.size(test_data,1)].T)
 
-    num_train_data = np.size(P,2)
-    num_test_data = np.size(TVP,2)
-    num_in_neuron = np.size(P,1)
-
+    # Initialize NUMBER of NEURON, TEST DATA, and TRAIN DATA
+    num_train_data = np.size(P,1)
+    num_test_data = np.size(TVP,1)
+    num_input_neuron = np.size(P,0)
 
     if elm_type != REGRESSION:
-        # CLASSIFICATION rule
-        print 'classification rule'
+        print 'Not implemented yet!'
 
-    ################################ START TRAINING #################################
-    t0 = time() # start the time
-    # Random generate input weight w_i and biases b_i of hidden neuron
-    in_weight = np.random.rand(num_hid_neuron, num_in_neuron) * 2 - 1
-    bias_hid_neuron = np.random.rand(num_hid_neuron, 1)
-    tempH = in_weight * P
 
-    ind = np.ones(1, num_train_data)
-    bias_matrix = bias_hid_neuron[:,ind] # Extend the bias matrix to match the demention of H
-    tempH = tempH + bias_matrix
+    ##################################################################
+    ##################### CALCULATE WEIGHT AND BIAS ##################
+    t0 = time()
 
-    # activation funciton
-    if activation_func == 'sigmoid':
-        H = np.mat(1 / (1 + np.exp(-tempH)))
-    elif activation_func == 'sine':
-        H = np.mat(np.sin(tempH))
-    elif activation_func == 'hardlim':
-        H = np.mat(tempH)
+    # Random generate input weight w_i and bias b_i of hidden neuron
+    input_weights =np.mat(np.random.rand(num_hidden_neuron, num_input_neuron) * 2 - 1)
+    bias_hidden_neuron = np.mat(np.random.rand(num_hidden_neuron, 1))
+    temp_H = np.mat(input_weights * P)
+    ind = np.mat(np.ones((1, num_train_data)))
+    bias_matrix = bias_hidden_neuron * ind # Extend the bias matrix to match the dimension of H
+    temp_H = temp_H + bias_matrix
+
+
+    ##################################################################
+    ############ CALCULATE HIDDEN NEURON OUTPUT MATRIX H #############
+    if activation_function == 'sigmoid':
+        # equal to MATLAB code -> H = 1 ./ (1 + exp(-tempH));
+        H = np.mat(np.divide(1, (1 + np.exp(np.multiply(-1, temp_H))))) # element wise divide and multiplication
+    elif activation_function == 'sine':
+        H = np.mat(np.sin(temp_H))
+    elif activation_function == 'hardlim':
+        H = utils.hardlim(temp_H)
+    elif activation_function == 'tribas':
+        H = utils.triangular_bf(temp_H)
+    elif activation_function == 'radbas':
+        H = utils.rad_bf(temp_H)
     else:
-        H = np.mat(np.ones(shape=(1,1)))
+        H = np.mat(np.divide(1, (1 + np.exp(np.multiply(-1, temp_H))))) # element wise divide and multiplication
+        print 'Unknown Activation Function selected! Using default sigmoid as Activation Function instead...'
 
-    # CALCULATE hidden neuron output matrix H
-    if pseudo_inv_param == 'SVDMP':
-        out_weight = pseudo_inverse_svdmp(H.T) * T.T # do a pseudo inverse, implementation without regularization factor
-    elif pseudo_inv_param == 'GENINV':
-        out_weight = pseudo_inverse_geninv(H.T)
+    ##################################################################
+    ################ CALCULATE OUTPUT WEIGHTS beta_i #################
+    if pseudo_inverse_method == 'svd':
+        output_weights = utils.pseudoinv_svd(H.T) * T.T
+    elif pseudo_inverse_method == 'geninv':
+        output_weights = utils.pseudoinv_geninv(H)
+    elif pseudo_inverse_method == 'qrpivot':
+        output_weights = utils.pseudoinv_qrpivot(H)
     else:
-        out_weight = pseudo_inverse_qrpivot(H.T)
+        output_weights = utils.pseudoinv_svd(H.T) * T.T
+        print 'Unknown Pseudo-Inverse method selected! Using default Moore-Penrose Pseudo-Inverse method instead...'
 
     t1 = time()
-    training_time = t1 - t0
+    train_time = t1 - t0 # time to train the ELM
+    print 'Train Time = ' + str(train_time)
 
-    # CALCULATE training accuracy
-    Y = np.mat((H.T * out_weight)).T
+
+    ##################################################################
+    ################## CALCULATE TRAINING ACCURACY ###################
+    Y = np.mat(H.T * output_weights).T # Y: the actual output of the training data
+    print 'Y_ELM: ', Y
+    Y = np.squeeze(np.asarray(Y)) # Squeeze matrix to one dimension array
+    # print np.squeeze(Y), x_sample
     if elm_type == REGRESSION:
-        train_acc = compute_rmse(T,Y)
+        train_accuracy = utils.compute_rmse(T, Y)
+        print 'Train Accuracy = ' + str(train_accuracy)
 
-    # CALCULATE output of testing input
+    ##################################################################
+    ############### CALCULATE OUTPUT OF TESTING INPUT ################
     t2 = time()
-    tempH_test = in_weight * TVP
-    ind = np.ones(1, num_test_data)
-    bias_matrix = bias_hid_neuron[:, ind]
-    tempH_test = tempH_test + bias_matrix
-
-    if activation_func == 'sigmoid':
-        H_test = np.mat(1 / (1 + np.exp(-tempH_test)))
-    if activation_func == 'sine':
-        H_test = np.mat(np.sin(tempH_test))
+    temp_H_test = input_weights * TVP
+    ind = np.mat(np.ones((1, num_test_data)))
+    bias_matrix = bias_hidden_neuron * ind # Extend the bias matrix to match the dimension of H
+    temp_H_test = temp_H_test + bias_matrix
+    if activation_function == 'sigmoid':
+        # equal to MATLAB code -> H = 1 ./ (1 + exp(-tempH));
+        H_test = np.mat(np.divide(1, (1 + np.exp(np.multiply(-1, temp_H_test))))) # element wise divide and multiplication
+    elif activation_function == 'sine':
+        H_test = np.mat(np.sin(temp_H_test))
+    elif activation_function == 'hardlim':
+        H_test = utils.hardlim(temp_H_test)
+    elif activation_function == 'tribas':
+        H_test = utils.triangular_bf(temp_H_test)
+    elif activation_function == 'radbas':
+        H_test = utils.rad_bf(temp_H_test)
     else:
-        H_test = np.mat(np.ones(shape=(1,1)))
+        H_test = np.mat(np.divide(1, (1 + np.exp(np.multiply(-1, temp_H_test))))) # element wise divide and multiplication
+        print 'Unknown Activation Function selected! Using default sigmoid as Activation Function instead...'
 
-    TY = np.mat((H_test.T * out_weight)).T
+    TY = np.mat(H_test.T * output_weights).T # TY: the actual output of the testing data
+    print 'TY_ELM: ', TY
     t3 = time()
-    test_time = t3 - t2
+    test_time = t3 - t2 # ELM time to predict the whole testing data
+    print 'Test Time = ' + str(test_time)
+    TY = np.squeeze(np.asarray(TY)) # Squeeze matrix to one dimension array
+    # print np.squeeze(Y), x_sample
 
+
+    ##################################################################
+    ################## CALCULATE TRAINING ACCURACY ###################
     if elm_type == REGRESSION:
-        test_acc = compute_rmse(TVT, TY)
-    if elm_type == CLASSIFIER:
-        # CLASSIFICATION rule
-        print 'classifier rule'
+        test_accuracy = utils.compute_rmse(TVT, TY)
+        print 'Test Accuracy = ' + str(test_accuracy)
 
-    return
+    if elm_type == CLASSIFIER:
+        print 'Not implemented yet!'
+
+    return Y, TY

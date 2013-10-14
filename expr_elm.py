@@ -4,6 +4,7 @@ __author__ = 'iwawiwi'
 import numpy as np
 from time import time
 import utils
+import matplotlib.pyplot as plt
 
 
 # true signal
@@ -15,7 +16,7 @@ y_true = np.sin(x)
 """
 Initialize sample size
 """
-n_sample = 10
+n_sample = 10000
 x_sample = np.linspace(0.0, 2*np.pi, n_sample, True)
 noise1 = np.random.normal(0, 0.15, len(x_sample))
 y_sample1 = np.sin(x_sample) + noise1
@@ -131,15 +132,31 @@ train_time = t0 - t1 # time to train the ELM
 ##################################################################
 ################## CALCULATE TRAINING ACCURACY ###################
 Y = np.mat(H.T * output_weights).T # Y: the actual output of the training data
+Y = np.squeeze(np.asarray(Y)) # Squeeze matrix to one dimension array
+# print np.squeeze(Y), x_sample
 if elm_type == REGRESSION:
     train_accuracy = utils.compute_rmse(T, Y)
+    print 'Train Accuracy = ' + str(train_accuracy)
 
+
+fig = plt.figure('TRAIN REGRESSION')
+ax = fig.add_subplot(111)
+ax.plot(x, y_true, 'g-', linewidth=2, label='True')
+ax.scatter(x_sample, y_sample1, s=50, facecolors='none', edgecolors='b', linewidths=0.5, label='Train Data1')
+ax.scatter(x_sample, y_sample2, s=50, facecolors='none', edgecolors='r', linewidths=0.5, label='Train Data2')
+ax.plot(x_sample, Y, 'y--', linewidth=2, label='Train Output')
+plt.xlabel('X')
+plt.ylabel('y')
+plt.title('Regression with ELM with N data = ' + str(len(x_sample)))
+plt.legend()
+plt.grid()
+# plt.show()
 
 ##################################################################
 ############### CALCULATE OUTPUT OF TESTING INPUT ################
 t2 = time()
 temp_H_test = input_weights * TVP
-ind = np.ones(1, num_test_data)
+ind = np.mat(np.ones((1, num_test_data)))
 bias_matrix = bias_hidden_neuron * ind # Extend the bias matrix to match the dimension of H
 temp_H_test = temp_H_test + bias_matrix
 if activation_function == 'sigmoid':
@@ -160,12 +177,28 @@ else:
 TY = np.mat(H_test.T * output_weights).T # TY: the actual output of the testing data
 t3 = time()
 test_time = t3 - t2 # ELM time to predict the whole testing data
+TY = np.squeeze(np.asarray(TY)) # Squeeze matrix to one dimension array
+# print np.squeeze(Y), x_sample
 
 
 ##################################################################
 ################## CALCULATE TRAINING ACCURACY ###################
 if elm_type == REGRESSION:
     test_accuracy = utils.compute_rmse(TVT, TY)
+    print 'Test Accuracy = ' + str(test_accuracy)
+
+fig = plt.figure('TEST REGRESSION')
+ax = fig.add_subplot(111)
+ax.plot(x, y_true, 'g-', linewidth=2, label='True')
+ax.scatter(x_sample, y_test1, s=50, facecolors='none', edgecolors='b', linewidths=0.5, label='Test Data1')
+ax.scatter(x_sample, y_test2, s=50, facecolors='none', edgecolors='r', linewidths=0.5, label='Test Data2')
+ax.plot(x_sample, TY, 'y--', linewidth=2, label='Test Output')
+plt.xlabel('X')
+plt.ylabel('y')
+plt.title('Regression with ELM with N data = ' + str(len(x_sample)))
+plt.legend()
+plt.grid()
+plt.show()
 
 if elm_type == CLASSIFIER:
     print 'Not implemented yet!'

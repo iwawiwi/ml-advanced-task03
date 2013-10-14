@@ -67,16 +67,42 @@ def pseudoinv_svd(x):
     """
     Moore-Penrose Pseudo-Inverse Matrix
     """
-    p_inv = np.linalg.pinv(x) # TODO: Temporary, using pinv numpy.linalg function
+    p_inv = np.linalg.pinv(x) # TODO: Still using pinv numpy.linalg function
     return p_inv
 
 
-# TODO: Not implemented yet!
 def pseudoinv_geninv(x):
     """
     GENINV Pseudo-Inverse
+    Taken from MATLAB source code of original paper
     """
-    return x
+    x = np.mat(x)
+    m = np.size(x,0)
+    n = np.size(x,1)
+    transpose = False
+    if m < n:
+        print 'transpose'
+        transpose = True
+        A = x * x.T
+    else:
+        A = x.T * x
+    #print 'A: ', A
+
+    # Full rank cholesky factorization
+    L = np.linalg.cholesky(A) # TODO: Still using cholesky numpy.linalg function
+    #print 'L: ', L
+    LTLI = (L.T * L).I
+    #print 'LTLI: ', LTLI
+
+    pseudo_inv = L * LTLI * LTLI * L.T
+    if transpose:
+        print 'transpose'
+        geninv = x.T * pseudo_inv
+    else:
+        print 'pseudo_inv: ', pseudo_inv
+        print 'x.T: ', x.T
+        geninv = pseudo_inv * x.T
+    return geninv
 
 
 # TODO: Not implemented yet!
@@ -84,6 +110,8 @@ def pseudoinv_qrpivot(x):
     """
     QR-Pivot Pseudo-Inverse
     """
+    m = np.size(x,0)
+    n = np.size(x,1)
     return x
 
 
@@ -97,3 +125,13 @@ def compute_rmse(actual, computed):
     sq_err_sum = sq_err.sum()
     mse = (1.0 / (2*n)) * sq_err_sum # Mean Square Error
     return np.sqrt(mse) # Return Root Mean Square Error
+
+
+# TODO: Testing purpose only
+A = np.mat([[1,2],[2,1],[2,3]])
+p_inv = pseudoinv_svd(A)
+gen_inv = pseudoinv_geninv(A)
+qr_inv = pseudoinv_qrpivot(A)
+
+print 'MP Pseudo-Inverse: ', p_inv
+print 'GEN-INV Pseudo-Inverse', gen_inv
