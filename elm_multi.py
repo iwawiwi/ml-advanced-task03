@@ -60,22 +60,22 @@ test_data = np.mat(test_data) # cast as matrix
 
 REGRESSION = 0
 elm_type = REGRESSION
-num_hidden_neuron = 40
+num_hidden_neuron = 1
 activation_function = 'radbas'
 pseudo_inverse_method = 'svd'
 
 #Y, TY = elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function, pseudo_inverse_method)
 # TODO: Swap training and testing data
-Y, TY = elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function, pseudo_inverse_method)
+# Y, TY = elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function, pseudo_inverse_method)
 
 #print 'Y: ', Y
 #print 'TY: ', TY
 
-Y = np.reshape(Y, (len(attr1), -1))
-TY = np.reshape(TY, (len(attr1), -1))
+#Y = np.reshape(Y, (len(attr1), -1))
+#TY = np.reshape(TY, (len(attr1), -1))
 
-print 'Y: ', Y
-print 'TY: ', TY
+#print 'Y: ', Y
+#print 'TY: ', TY
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -90,21 +90,21 @@ ax.set_xlabel('attr1')
 ax.set_ylabel('attr2')
 plt.title('Target Function')
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(attr1, attr2, Y, cmap = cm.hot, alpha=0.3)
-ax.set_zlim(-2.5, 2.5)
-ax.set_xlabel('attr1')
-ax.set_ylabel('attr2')
-plt.title('Train Result')
-# plt.show()
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(attr1, attr2, TY, cmap=cm.hot, alpha=0.3)
-ax.set_zlim(-2.5, 2.5)
-ax.set_xlabel('attr1')
-ax.set_ylabel('attr2')
-plt.title('Testing Result')
+#fig = plt.figure()
+#ax = fig.add_subplot(111, projection='3d')
+#ax.plot_surface(attr1, attr2, Y, cmap = cm.hot, alpha=0.3)
+#ax.set_zlim(-2.5, 2.5)
+#ax.set_xlabel('attr1')
+#ax.set_ylabel('attr2')
+#plt.title('Train Result')
+## plt.show()
+#
+#fig = plt.figure()
+#ax = fig.add_subplot(111, projection='3d')
+#ax.plot_surface(attr1, attr2, TY, cmap=cm.hot, alpha=0.3)
+#ax.set_zlim(-2.5, 2.5)
+#ax.set_xlabel('attr1')
+#ax.set_ylabel('attr2')
+#plt.title('Testing Result')
 plt.show()
 

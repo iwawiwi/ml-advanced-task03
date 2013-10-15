@@ -39,11 +39,11 @@ test_data = np.mat(test_data) # cast as matrix
 
 REGRESSION = 0
 elm_type = REGRESSION
-num_hidden_neuron = 5
-activation_function = 'tribas'
+num_hidden_neuron = 1
+activation_function = 'sig'
 pseudo_inverse_method = 'svd'
 
-Y, TY = elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function, pseudo_inverse_method)
+Y, TY, Y_acc, TY_acc = elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function, pseudo_inverse_method)
 
 import matplotlib.pyplot as plt
 

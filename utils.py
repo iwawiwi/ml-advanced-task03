@@ -2,6 +2,7 @@ __author__ = 'iwawiwi'
 
 
 import numpy as np
+from time import time
 
 
 def hardlim(x):
@@ -67,7 +68,11 @@ def pseudoinv_svd(x):
     """
     Moore-Penrose Pseudo-Inverse Matrix
     """
+    t0 = time()
     p_inv = np.linalg.pinv(x) # TODO: Still using pinv numpy.linalg function
+    t1 = time()
+    elapsed_time = t1 - t0
+    print 'Elapsed time for computing Pseudo-Inverse using PINV method: ', str(elapsed_time)
     return p_inv
 
 
@@ -76,12 +81,13 @@ def pseudoinv_geninv(x):
     GENINV Pseudo-Inverse
     Taken from MATLAB source code of original paper
     """
+    t0 = time()
     x = np.mat(x)
     m = np.size(x,0)
     n = np.size(x,1)
     transpose = False
     if m < n:
-        print 'transpose'
+        #print 'transpose'
         transpose = True
         A = x * x.T
     else:
@@ -96,12 +102,15 @@ def pseudoinv_geninv(x):
 
     pseudo_inv = L * LTLI * LTLI * L.T
     if transpose:
-        print 'transpose'
+        #print 'transpose'
         geninv = x.T * pseudo_inv
     else:
-        print 'pseudo_inv: ', pseudo_inv
-        print 'x.T: ', x.T
+        #print 'pseudo_inv: ', pseudo_inv
+        #print 'x.T: ', x.T
         geninv = pseudo_inv * x.T
+    t1 = time()
+    elapsed_time = t1 - t0
+    print 'Elapsed time for computing Pseudo-Inverse using GENINV method: ', str(elapsed_time)
     return geninv
 
 
@@ -110,9 +119,23 @@ def pseudoinv_qrpivot(x):
     """
     QR-Pivot Pseudo-Inverse
     """
+    t0 = time()
+    x = np.mat(x)
     m = np.size(x,0)
     n = np.size(x,1)
-    return x
+    if m >= n:
+        r = np.linalg.qr(x, mode='r') # For fast computation TODO: Still using QR numpy.linalg function
+        r = np.mat(r)
+        # Full rank R
+        # if np.linalg.matrix_rank(r) == n:
+        qr_inv = (r.T * r).I * x.T
+        t1 = time()
+        elapsed_time = t1 - t0
+        print 'Elapsed time for computing Pseudo-Inverse using QR-PIVOT method: ', str(elapsed_time)
+        return qr_inv
+    else:
+        print 'Cannot decompose Matrix with QR-PIVOT!'
+        raise Exception("Can't do QR-Pivot!")
 
 
 def compute_rmse(actual, computed):
@@ -128,10 +151,13 @@ def compute_rmse(actual, computed):
 
 
 # TODO: Testing purpose only
-A = np.mat([[1,2],[2,1],[2,3]])
-p_inv = pseudoinv_svd(A)
-gen_inv = pseudoinv_geninv(A)
-qr_inv = pseudoinv_qrpivot(A)
-
-print 'MP Pseudo-Inverse: ', p_inv
-print 'GEN-INV Pseudo-Inverse', gen_inv
+#A = np.mat([[1,2],[2,1],[2,3]])
+#A = np.random.rand(500000,10)
+#A = np.random.rand(3, 2)
+#pse_inv = pseudoinv_svd(A)
+#gen_inv = pseudoinv_geninv(A)
+#qrpivot_inv = pseudoinv_qrpivot(A)
+#
+#print 'MP Pseudo-Inverse: ', pse_inv
+#print 'GEN-INV Pseudo-Inverse', gen_inv
+#print 'QR-PIVOT Pseudo-Inverse', qrpivot_inv

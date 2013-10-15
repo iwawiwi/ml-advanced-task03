@@ -68,9 +68,9 @@ def elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function,
     if pseudo_inverse_method == 'svd':
         output_weights = utils.pseudoinv_svd(H.T) * T.T
     elif pseudo_inverse_method == 'geninv':
-        output_weights = utils.pseudoinv_geninv(H)
+        output_weights = utils.pseudoinv_geninv(H.T) * T.T
     elif pseudo_inverse_method == 'qrpivot':
-        output_weights = utils.pseudoinv_qrpivot(H)
+        output_weights = utils.pseudoinv_qrpivot(H.T) * T.T
     else:
         output_weights = utils.pseudoinv_svd(H.T) * T.T
         print 'Unknown Pseudo-Inverse method selected! Using default Moore-Penrose Pseudo-Inverse method instead...'
@@ -86,6 +86,7 @@ def elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function,
     print 'Y_ELM: ', Y
     Y = np.squeeze(np.asarray(Y)) # Squeeze matrix to one dimension array
     # print np.squeeze(Y), x_sample
+    train_accuracy = 0
     if elm_type == REGRESSION:
         train_accuracy = utils.compute_rmse(T, Y)
         print 'Train Accuracy = ' + str(train_accuracy)
@@ -123,6 +124,7 @@ def elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function,
 
     ##################################################################
     ################## CALCULATE TRAINING ACCURACY ###################
+    test_accuracy = 0
     if elm_type == REGRESSION:
         test_accuracy = utils.compute_rmse(TVT, TY)
         print 'Test Accuracy = ' + str(test_accuracy)
@@ -130,4 +132,4 @@ def elm(train_data, test_data, elm_type, num_hidden_neuron, activation_function,
     if elm_type == CLASSIFIER:
         print 'Not implemented yet!'
 
-    return Y, TY
+    return Y, TY, train_accuracy, test_accuracy
